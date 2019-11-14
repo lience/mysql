@@ -1,0 +1,66 @@
+/*构造创建分区函数*/
+
+delimiter $$  /* 修改mysql语句结束标志,默认结束标志是“;” [必须执行] */
+DROP PROCEDURE IF EXISTS gw_test_log_pt
+$$
+CREATE PROCEDURE gw_test_log_pt()
+BEGIN
+  DECLARE v_sysdate date;
+  DECLARE v_mindate date;
+  DECLARE v_maxdate date;
+  DECLARE v_pt varchar(20);
+  DECLARE v_maxval varchar(20);
+  DECLARE i int;
+  
+  /*增加新分区*/
+  SELECT max(cast(replace(partition_description, '''', '') AS date)) AS val
+  INTO   v_maxdate
+  FROM   INFORMATION_SCHEMA.PARTITIONS
+  WHERE  TABLE_NAME = '表名' AND TABLE_SCHEMA = '数据库名';
+  
+  set v_sysdate = sysdate();
+  
+  set v_maxdate = v_maxdate + INTERVAL 1 DAY;
+  
+  WHILE v_maxdate < (v_sysdate + INTERVAL 7 DAY) DO
+    SET v_pt = date_format(v_maxdate ,'%Y%m%d');
+    SET v_maxval = date_format(v_maxdate + INTERVAL 1 DAY, '%Y-%m-%d 00:00:00');
+    SET @sql = concat('alter table 表名 add partition (partition p', v_pt, ' values less than(''', v_maxval, '''))');
+    -- SELECT @sql;
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+    SET v_maxdate = v_maxdate + INTERVAL 1 DAY;
+  END WHILE;
+
+END$$
+ 
+delimiter ; /* 还原mysql语句结束标志 ";" [必须执行] */
+
+
+/* mysql  数据库 没有在自动生成分区的功能 需要用事件来触发  触发事件如下*/
+DELIMITER $$
+drop event if exists auto_pt $$
+create event auto_pt
+on schedule
+every 1 day
+starts '2019-11-14 00:00:00'
+do
+BEGIN
+    call gw_test_log_pt();  /* 创建分区函数 */
+END$$
+delimiter ;
+
+
+
+
+
+/* 查询库表分区的表名和条件*/
+select partition_name,partition_description FROM INFORMATION_SCHEMA.PARTITIONS WHERE TABLE_NAME='表名' AND TABLE_SCHEMA='数据库名';
+
+/* 查询库表分区的表名和该分区数据的条数*/
+select partition_name, table_rows FROM INFORMATION_SCHEMA.PARTITIONS WHERE TABLE_NAME='表名' AND TABLE_SCHEMA='数据库名';
+
+/* 删除分区*/
+alter table table_name drop partition partition_name;
+

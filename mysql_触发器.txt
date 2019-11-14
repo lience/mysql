@@ -1,0 +1,40 @@
+
+/*创建触发事件： 创建出发触发事件之前需要创建触发事件表：*/
+
+/* 触发事件表字段：log_id, proxy_id, ip, port, proxy_type, action, time */
+
+/*插入触发事件：*/
+delimiter &&  /* 修改mysql语句结束标志,默认结束标志是“;” [必须执行] */
+create trigger tr_insert after insert on 原始表名 for each row 
+begin 
+	insert into 触发事件表名 values(0, new.proxy_id, new.ip, new.port, new.proxy_type,'insert', now()); 
+end &&
+delimiter ;  /* 还原mysql语句结束标志 ";" [必须执行] */
+
+
+
+/*更新触发事件：*/
+delimiter &&
+create trigger tr_update after update on 原始表名 for each row 
+begin 
+	insert into 触发事件表名 values(0, old.proxy_id, old.ip, old.port, old.proxy_type,'update', now());
+end &&
+delimiter ; 
+
+
+
+/*删除触发事件：*/
+delimiter &&
+create trigger tr_delete before delete on 原始表名 for each row 
+begin 
+	insert into 触发事件表名 values(0, old.proxy_id, old.ip, old.port, old.proxy_type,'update', now());
+end &&
+delimiter ;
+
+
+/* 触发器 删除*/
+DROP TRIGGER 触发器名；
+
+
+/* 触发器 查询 */
+SHOW TRIGGERS;
