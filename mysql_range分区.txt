@@ -1,5 +1,4 @@
 /*构造创建分区函数*/
-
 delimiter $$  /* 修改mysql语句结束标志,默认结束标志是“;” [必须执行] */
 DROP PROCEDURE IF EXISTS 创建分区函数名  /* proc_pt */
 $$
@@ -72,4 +71,12 @@ select partition_name, table_rows FROM INFORMATION_SCHEMA.PARTITIONS WHERE TABLE
 
 /* 删除分区*/
 alter table table_name drop partition partition_name;
+
+/* 查询分区数据 */
+select * from 表名 partition (分区名);  /* mysql 5.6 版本及以上可使用该语句 5.6 版本一下可用条件语句进行查询*/
+
+
+
+
+
 
