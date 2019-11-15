@@ -1,9 +1,9 @@
 /*构造创建分区函数*/
 
 delimiter $$  /* 修改mysql语句结束标志,默认结束标志是“;” [必须执行] */
-DROP PROCEDURE IF EXISTS gw_test_log_pt
+DROP PROCEDURE IF EXISTS 创建分区函数名  /* proc_pt */
 $$
-CREATE PROCEDURE gw_test_log_pt()
+CREATE PROCEDURE 创建分区函数 /* proc_pt() * /
 BEGIN
   DECLARE v_sysdate date;
   DECLARE v_mindate date;
@@ -38,6 +38,11 @@ END$$
 delimiter ; /* 还原mysql语句结束标志 ";" [必须执行] */
 
 
+/* 手动调用脚本创建分区 */
+1. mysql> call 创建分区函数名;
+2. mysql -uroot -p123456 数据库名 -e 'call 创建分区函数名'
+
+
 /* mysql  数据库 没有在自动生成分区的功能 需要用事件来触发  触发事件如下*/
 DELIMITER $$
 drop event if exists auto_pt $$
@@ -47,12 +52,16 @@ every 1 day
 starts '2019-11-14 00:00:00'
 do
 BEGIN
-    call gw_test_log_pt();  /* 创建分区函数 */
+    call 创建分区函数;  /* 创建分区函数 */
 END$$
 delimiter ;
 
 
+/*事件创建成功之后，需要查看mysql的事件开关是否开启(默认关闭)*/
+show variables like 'event_scheduler';
 
+/* 打开开关 */
+set global event_scheduler=on;
 
 
 /* 查询库表分区的表名和条件*/
