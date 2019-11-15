@@ -1,2 +1,3 @@
 # mysql
 Mysql add, delete, modify, partition, trigger...
+[20191115]
